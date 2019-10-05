@@ -50,7 +50,11 @@ app.get('/', (req,res) => {
 });
 
 app.get('/red', (req,res) => {
-    res.render('index');
+    res.render('judge', {side:'red'});
+});
+
+app.get('/blue', (req,res) => {
+    res.render('judge', {side:'blue'});
 });
 
 app.use(express.static('public'));
@@ -67,6 +71,7 @@ const updateScoreBoard = () => {
 
 redio.on("connection", (socket) => {
     socket.join("red_judge");
+    socket.emit('update', red_status);
 
     socket.on("change_score",(change,fn)=>{
         red_status.score += change;
@@ -86,6 +91,7 @@ redio.on("connection", (socket) => {
 
 blueio.on("connection", (socket) => {
     socket.join("blue_judge");
+    socket.emit('update', blue_status);
 
     socket.on("change_score",(change,fn)=>{
         blue_status.score += change;

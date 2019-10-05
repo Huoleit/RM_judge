@@ -21,7 +21,7 @@
     <div class="container">
         <div class="row">
             <div class="col-12 text-center"> 
-                <h1>Red Judge</h1>
+                <h1><%= side%> Judge</h1>
             </div>
         </div>
         <div class="row">
@@ -54,7 +54,7 @@
 
     <script src="js/socket.io.js"></script>
     <script>
-        const socket = io('/red');
+        const socket = io('/<%= side%>');
 
         $('.score-btn').click((e) => {
             let score = parseInt($(e.target).text());
@@ -88,6 +88,11 @@
 
         socket.on("updateIsOnSlopeStatus",(newStatus) => {
             updateStatusDisplay(newStatus);
+        });
+
+        socket.on('update', (data) => {
+            $('#scoreDisplay').text(data.score);
+            updateStatusDisplay(data.isOnSlope);
         });
 
     </script>
