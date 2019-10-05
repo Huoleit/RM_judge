@@ -1,0 +1,23 @@
+{
+  "name": "judge",
+  "version": "1.0.0",
+  "description": "This is judge system",
+  "main": "server.js",
+  "dependencies": {
+    "ejs": "^2.7.1",
+    "express": "^4.17.1",
+    "http": "0.0.0",
+    "net": "^1.0.2",
+    "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.3"
+  },
+  "scripts": {
+    "test": "start",
+    "start": "node server.js"
+  },
+  "author": "Cecil",
+  "license": "MIT"
+}

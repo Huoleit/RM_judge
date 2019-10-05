@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <title>Judge</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/scoreboard.css">
+</head>
+
+<body>
+    <!-- <button id="btn" onclick="test()"> Click</button> -->
+    <div class="border-bottom mb-3">
+        <div class="ml-5 my-3">
+            <h5>Internal Competition</h5>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-12 text-center"> 
+                <h1>Score Board</h1>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5 text-center">
+                RED
+            </div>
+            <div class="col-5 text-center ml-auto">
+                BLUE
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5 text-center score_display" id="red-scoreDisplay">0</div>
+            <div class="col-2 text-center score_display">:</div>
+            <div class="col-5 text-center score_display" id="blue-scoreDisplay">0</div>
+        </div>
+        <div class="row d-flex justify-content-center">
+            <div class="col-5 d-flex justify-content-center">
+                <div class="card w-50">
+                   
+                    <div class=" border border-bottom-0 border-dark rounded-top text-center card-header" id="red-colorTextDisplay">
+                        Green
+                    </div>
+                    <div class="card-body square bg"></div>
+                </div>
+            </div>
+            <div class="col-2"></div>
+
+            <div class="col-5 d-flex justify-content-center">
+                <div class="card w-50">
+                   
+                    <div class=" border border-bottom-0 border-dark rounded-top text-center card-header" id="blue-colorTextDisplay">
+                        Green
+                    </div>
+                    <div class="card-body square bg"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/socket.io.js"></script>
+    <script>
+        const socket = io('/display');
+        const updateOneSide = (team_info) => {
+            let prefix = team_info.name;
+            $('#' + prefix + '-scoreDisplay').text(team_info.score);
+            $('#' + prefix + '-colorTextDisplay').text(team_info.primary_color);
+
+            let color_block = $('#' + prefix + '-colorTextDisplay').siblings('div.card-body');
+
+            switch(team_info.primary_color)
+            {
+                case 'Blue':
+                    color_block.css('background-color', '#1E88E5');
+                    
+                    break;
+                case 'Red':
+                    color_block.css('background-color', '#e53935');
+
+                    break;
+                case 'Orange':
+                    color_block.css('background-color', '#FFB300');
+
+                    break;
+                default: break;
+            }
+        };
+        
+        socket.on('updatecontent',(data) => {
+            console.log(data);
+        });
+
+        socket.on('update', (data) => {
+            console.log(data);
+            for (let side of data)
+            {
+                console.log(side);
+                updateOneSide(side);
+            }
+        });
+
+    </script>
+</body>
+
+</html>

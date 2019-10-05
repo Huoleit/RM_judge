@@ -1,0 +1,10 @@
+
+.score_display{
+    font-size: 10em;
+}
+
+.square:after {
+    content: "";
+    display: block;
+    padding-bottom: 100%;
+  }
