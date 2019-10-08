@@ -24,20 +24,20 @@
                 <h1><%= side%> Judge</h1>
             </div>
         </div>
-        <div class="row">
-            <div class="col-4" id="blue_score">
+        <div class="row mb-3">
+            <div class="col-4">
                 <div class="row d-flex justify-content-center">
                     
-                    <h5>Coal</h5>
+                    <h5>low coal</h5>
                 </div>
                 <div class="row d-flex justify-content-center">
-                    <button class="btn btn-danger w-25 score-btn">-5</button>
-                    <div class="item_score_display border text-center" id="scoreDisplay">0</div>
-                    <button class="btn btn-info w-25 score-btn">+5</button>
+                    <button class="btn btn-danger w-25 score-btn">-1</button>
+                    <div class="item_score_display border text-center" id="scoreDisplay" data-name="low_score" data-lowlimit="0">0</div>
+                    <button class="btn btn-info w-25 score-btn">+1</button>
                 </div>
             </div>
 
-            <div class="col-4" id="blue_score">
+            <div class="col-4">
                 <div class="row d-flex justify-content-center">
                     
                     <h5>Car status</h5>
@@ -50,20 +50,73 @@
             </div>
            
         </div>
+        <div class="row mb-3">
+            <div class="col-4">
+                <div class="row d-flex justify-content-center">
+        
+                    <h5>high coal</h5>
+                </div>
+                <div class="row d-flex justify-content-center">
+                    <button class="btn btn-danger w-25 score-btn">-5</button>
+                    <div class="item_score_display border text-center" id="scoreDisplay" data-name="high_score" data-lowlimit="0">0</div>
+                    <button class="btn btn-info w-25 score-btn">+5</button>
+                </div>
+            </div>
+        
+            <div class="col-4">
+                <div class="row d-flex justify-content-center">
+        
+                    <h5>OnSlope finally</h5>
+                </div>
+                <div class="row d-flex justify-content-center">
+                    <button class="btn btn-danger w-25 score-btn">-20</button>
+                    <div class="item_score_display border text-center" data-uplimit='20' data-lowlimit='0' data-name="isStayOnSlope">0</div>
+                    <button class="btn btn-info w-25 score-btn">+20</button>
+                </div>
+            </div>
+        
+        </div>
     </div>
 
     <script src="js/socket.io.js"></script>
     <script>
         const socket = io('/<%= side%>');
 
+        // const wrap_data = (name,value) => {
+        //     switch(name)
+        //     {
+        //         case "low_score":
+        //             _status.low_score = value;
+        //             break;
+        //         case 'high_score':
+        //             _status.high_score = value;
+        //             break;
+        //         case 'isStayOnSlope':
+        //             _status.isStayOnSlope = value;
+        //             break;
+        //         default: 
+        //         console.log("Cannot find member name")
+        //         break;
+        //     }
+
+        // };
+
         $('.score-btn').click((e) => {
             let score = parseInt($(e.target).text());
             let p = $(e.target).siblings("div");
 
-            socket.emit("change_score",score , (feedback) => {
-                p.text(feedback);
-            });
-            // console.log(parseInt(p));
+            let up_limit = parseInt(p.attr('data-uplimit'));
+            let low_limit = parseInt(p.attr('data-lowlimit'));
+
+            let original = parseInt(p.text());
+
+            if(!((!isNaN(up_limit) && original+score > up_limit) || (!isNaN(low_limit) && original+score < low_limit)))
+            {
+                socket.emit("change_score",p.attr('data-name') ,score , (feedback) => {
+                    p.text(feedback);
+                });
+            }
+
         });
 
         const updateStatusDisplay = (feedback) => {
@@ -82,17 +135,22 @@
             socket.emit('changeIsOnSlopeStatus', send_data, updateStatusDisplay);
         });
 
-        socket.on("update_score",(newScore) => {
-            $('#scoreDisplay').text(newScore);
-        });
-
         socket.on("updateIsOnSlopeStatus",(newStatus) => {
             updateStatusDisplay(newStatus);
         });
 
         socket.on('update', (data) => {
-            $('#scoreDisplay').text(data.score);
+
             updateStatusDisplay(data.isOnSlope);
+            let availbale_display = $('div[data-name]');
+            availbale_display.each((index,element) => {
+                let key = $(element).attr('data-name');
+                if(!(key in data))
+                    console.error('Can not find this key: ' + key);
+                $(element).text(data[key]);
+                
+            });
+           
         });
 
     </script>
