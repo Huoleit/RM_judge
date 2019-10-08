@@ -21,18 +21,16 @@ var red_status = {
                 isOnSlope: false,
                 primary_color:"Blue"};
 
-var blue_status = red_status;
-blue_status.name = "blue";
 
-// var blue_status = {
-//                 name:"blue",
-//                 score:0,
-//                 low_score:0,
-//                 high_score:0,
-//                 cube_score:0,
-//                 isStayOnSlope:false,
-//                 isOnSlope: false,
-//                 primary_color:"Blue"};
+var blue_status = {
+                name:"blue",
+                score:0,
+                low_score:0,
+                high_score:0,
+                cube_score:0,
+                isStayOnSlope:0,
+                isOnSlope: false,
+                primary_color:"Blue"};
 
 
 const server = net.createServer((c) => {
