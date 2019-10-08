@@ -33,6 +33,7 @@
             </div>
         </div>
         <div class="row">
+            
             <div class="col-5 text-center score_display" id="red-scoreDisplay">0</div>
             <div class="col-2 text-center score_display">:</div>
             <div class="col-5 text-center score_display" id="blue-scoreDisplay">0</div>
@@ -47,7 +48,23 @@
                     <div class="card-body square bg"></div>
                 </div>
             </div>
-            <div class="col-2"></div>
+
+            <div class="col-1 red-statusDisplay">
+                <div class="unstable">
+                    <img src="red.svg" alt="" class="w-100">
+                </div>
+                <div class="stable" style="display: none;">
+                    <img src="green.svg" alt="" class="w-100">
+                </div>
+            </div>
+            <div class="col-1 blue-statusDisplay">
+                <div class="unstable">
+                    <img src="red.svg" alt="" class="w-100">
+                </div>
+                <div class="stable" style="display: none;">
+                    <img src="green.svg" alt="" class="w-100">
+                </div>
+            </div>
 
             <div class="col-5 d-flex justify-content-center">
                 <div class="card w-50">
@@ -69,6 +86,16 @@
             let prefix = team_info.name;
             $('#' + prefix + '-scoreDisplay').text(team_info.score);
             $('#' + prefix + '-colorTextDisplay').text(team_info.primary_color);
+            let available_icon = $('.' + prefix + '-statusDisplay').children();
+            if (team_info.isOnSlope) {
+                available_icon.filter('.unstable').hide();
+                available_icon.filter('.stable').show();
+            }
+            else
+            {
+                available_icon.filter('.stable').hide();
+                available_icon.filter('.unstable').show();
+            }
 
             let color_block = $('#' + prefix + '-colorTextDisplay').siblings('div.card-body');
 
