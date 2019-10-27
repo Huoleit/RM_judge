@@ -8,3 +8,18 @@
     display: block;
     padding-bottom: 100%;
   }
+
+  body
+  {
+    /* background-image: url('/images/bg.jpg'); */
+    background-color: white;
+  }
+
+  .nav-title
+  {
+    background-color: white;
+  }
+
+  .side-text{
+    font-size: 2em;
+  }
