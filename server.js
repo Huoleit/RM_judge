@@ -10,6 +10,8 @@ const displayio = io.of('/display');
 const net = require('net');
 
 var port = 3000;
+var tcp_server_port_red = 8124;
+var tcp_server_port_blue = 8100;
 
 var red_status = {
                 name:"red",
@@ -32,25 +34,71 @@ var blue_status = {
                 isOnSlope: false,
                 primary_color:"Blue"};
 
+var red_data_packet = {
+    name:"red",
+    color:"blue",
+    isStable:false,
+    isAvailable:false
+};
 
-const server = net.createServer((c) => {
- 
-  console.log('client connected');
-  c.on('end', () => {
-    console.log('client disconnected');
-  });
-  c.write('hello\n');
-  setInterval(()=>{
-      c.write('alive');
-  }, 3000);
+var blue_data_packet = {
+    name:"blue",
+    color:"blue",
+    isStable:false,
+    isAvailable:false
+};
 
-c.on("data", (data) => {console.log(data.toString())});
+let sockets = [];
+let intervals = [];
+
+const server_red = net.createServer();
+const server_blue = net.createServer();
+
+function server_handler(server,side = 'red')
+{
+    server.on('connection', (socket) => {
+        console.log('CONNECTED:  ' + socket.remoteAddress + ' : ' + socket.remotePort);
+    
+        let interval = setInterval(()=>{
+            socket.write(JSON.stringify(side === 'red' ? red_data_packet:blue_data_packet) + '\n');
+        }, 500);
+        let soc_obj = {socket:socket, interval:interval};
+    
+        sockets.push(soc_obj);
+        console.log(sockets.length);
+    
+        socket.on('data', (data) => 
+        {
+            console.log(data.toString());
+        });
+    
+        socket.on('close', function() {
+            let index = sockets.findIndex(function(o) {
+                return o.socket.remoteAddress === socket.remoteAddress && o.socket.remotePort === socket.remotePort;
+            })
+            if (index !== -1) 
+            {
+                clearInterval(sockets[index].interval);
+                sockets.splice(index, 1);
+                console.log(sockets.length);
+            }
+            console.log('CLOSED: ' + socket.remoteAddress + ' ' + socket.remotePort);
+        });
+    });
+
+    server.on('error', (err) => {
+        throw err;
+      });
+}
+
+server_handler(server_red,'red');
+server_handler(server_blue, 'blue');
+
+server_red.listen(tcp_server_port_red, () => {
+  console.log('red server listen at port: ' + tcp_server_port_red);
 });
-server.on('error', (err) => {
-  throw err;
-});
-server.listen(8124, () => {
-  console.log('server bound');
+server_blue.listen(tcp_server_port_blue, () => {
+    console.log('blue server listen at port: ' + tcp_server_port_blue);
 });
 
 app.engine('html', require('ejs').renderFile);
@@ -87,27 +135,51 @@ const updateJudgeBoard = (side="red") => {
         io.of('/blue').to('blue_judge').emit("update",blue_status);
 };
 
-// const change_member_data = (name,change,_status) => {
-//     switch(name)
-//     {
-//         case "low_score":
-//             _status.low_score += change;
-//             return _status.low_score;
+const updateAvailTime = (socket) => {
+    socket.on('reset_time',() => {
+        if('red_judge' in socket.rooms) red_data_packet.isAvailable = true;
+        else if('blue_judge' in socket.rooms) blue_status.isAvailable = true;
 
-//         case 'high_score':
-//             _status.high_score += change;
-//             return _status.high_score;
-            
-//         case 'isStayOnSlope':
-//             _status.isStayOnSlope += change;
-//             return _status.isStayOnSlope;
+        let total_time = 30;
+        let red_index = intervals.findIndex((o) => {
+            return 'red_judge' in o.socket.rooms;
+        });
+        let blue_index = intervals.findIndex((o) => {
+            return 'blue_judge' in o.socket.rooms;
+        });
+        socket.to(Object.keys(socket.rooms)[1]).emit('update_time', total_time);
+        socket.emit('update_time', total_time);
 
-//         default: 
-//             console.log("Cannot find member name")
-//         return null;
-//     }
+        if(red_index!==-1)
+        {
+            clearInterval(intervals[red_index].count_down);
+            intervals.splice(red_index,1);
+        }
+        
+        if(blue_index!==-1)
+        {
+            clearInterval(intervals[blue_index].count_down);
+            intervals.splice(blue_index,1);
+        }
+        let stored = {socket:socket,time:total_time};
+        let count_down = setInterval(() => {
+            stored.time--;
 
-// };
+            socket.to(Object.keys(socket.rooms)[1]).emit('update_time', stored.time);
+            socket.emit('update_time', stored.time);
+
+            console.log(Object.keys(socket.rooms)[1] + ' '+stored.time);
+            if(stored.time <= 0)
+            {
+                clearInterval(stored.count_down);
+                if('red_judge' in socket.rooms) red_data_packet.isAvailable = false;
+                else if('blue_judge' in socket.rooms) blue_status.isAvailable = false;
+            }
+        },1000);
+        stored.count_down = count_down;
+        intervals.push(stored);
+    });
+};
 
 
 redio.on("connection", (socket) => {
@@ -130,8 +202,17 @@ redio.on("connection", (socket) => {
         red_status.isOnSlope = status;
         fn(red_status.isOnSlope);
         socket.broadcast.to('red_judge').emit('updateIsOnSlopeStatus', red_status.isOnSlope);
+        red_data_packet.isStable = red_status.isOnSlope;
         updateScoreBoard();
     });
+
+    socket.on("change_color", (color) => {
+        red_status.primary_color = color;
+        red_data_packet.color = color;
+        updateScoreBoard();
+    });
+
+    updateAvailTime(socket);
     
 });
 
@@ -154,9 +235,18 @@ blueio.on("connection", (socket) => {
         blue_status.isOnSlope = status;
         fn(blue_status.isOnSlope);
         socket.broadcast.to('blue_judge').emit('updateIsOnSlopeStatus', blue_status.isOnSlope);
+        blue_data_packet.isStable = blue_status.isOnSlope;
+        updateScoreBoard();
+    });
+
+    socket.on("change_color", (color) => {
+        blue_status.primary_color = color;
+        blue_data_packet.color = color;
         updateScoreBoard();
     });
     
+    updateAvailTime(socket);
+
 });
 
 displayio.on('connection' ,(socket) => {

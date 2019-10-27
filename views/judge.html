@@ -48,8 +48,23 @@
                     <button class="btn btn-info w-25" id="isOnSlop">On</button>
                 </div>
             </div>
-           
-        </div>
+
+            <div class="col-4">
+                <div class="row d-flex justify-content-center">
+                    <h5>Color</h5>
+                </div>
+            
+                <div class="row d-flex">
+            
+                    <button class="btn btn-primary flex-fill color-button">Blue</button>
+                    <button class="btn btn-success flex-fill color-button">Green</button>
+                    <button class="btn btn-danger flex-fill color-button">Red</button>
+                    <button class="btn btn-warning flex-fill color-button">Yellow</button>
+                </div>
+            
+            </div>
+            
+            </div>
         <div class="row mb-3">
             <div class="col-4">
                 <div class="row d-flex justify-content-center">
@@ -74,6 +89,15 @@
                     <button class="btn btn-info w-25 score-btn">+20</button>
                 </div>
             </div>
+            <div class="col-4">
+                <div class="row d-flex justify-content-center">
+                    <h5>Availbale time</h5>
+                </div>
+                <div class="row d-flex justify-content-center">
+                    <div class="w-75 item_score_display" id="time_display">0:00</div>
+                    <button class="btn btn-info w-25" id="btn-reset">Reset</button>
+                </div>
+            </div>
         
         </div>
     </div>
@@ -81,25 +105,6 @@
     <script src="js/socket.io.js"></script>
     <script>
         const socket = io('/<%= side%>');
-
-        // const wrap_data = (name,value) => {
-        //     switch(name)
-        //     {
-        //         case "low_score":
-        //             _status.low_score = value;
-        //             break;
-        //         case 'high_score':
-        //             _status.high_score = value;
-        //             break;
-        //         case 'isStayOnSlope':
-        //             _status.isStayOnSlope = value;
-        //             break;
-        //         default: 
-        //         console.log("Cannot find member name")
-        //         break;
-        //     }
-
-        // };
 
         $('.score-btn').click((e) => {
             let score = parseInt($(e.target).text());
@@ -117,6 +122,21 @@
                 });
             }
 
+        });
+
+        $(".color-button").click((e) => {
+            let color = $(e.target).text();
+            socket.emit("change_color",color);
+        });
+
+        const display_avail_time = (time) => {
+            let seconds = time%60;
+            let minutes = (time - seconds)/60;
+            $("#time_display").text(minutes.toString() + ":" + (seconds.toString().length===1 ? '0' : '') + seconds.toString());
+        };
+
+        $("#btn-reset").click((e) => {
+            socket.emit("reset_time");
         });
 
         const updateStatusDisplay = (feedback) => {
@@ -137,6 +157,10 @@
 
         socket.on("updateIsOnSlopeStatus",(newStatus) => {
             updateStatusDisplay(newStatus);
+        });
+
+        socket.on('update_time',(time) => {
+            display_avail_time(time);
         });
 
         socket.on('update', (data) => {

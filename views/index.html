@@ -13,9 +13,11 @@
 
 <body>
     <!-- <button id="btn" onclick="test()"> Click</button> -->
-    <div class="border-bottom mb-3">
-        <div class="ml-5 my-3">
-            <h5>Internal Competition</h5>
+    <div class="container-fluid mb-3 nav-title">
+        <div class="row">
+            <div class="col-12 ml-5 my-3">
+                <h5>HKUST RoboMaster Internal Competition 2020</h5>
+            </div>
         </div>
     </div>
     <div class="container">
@@ -25,10 +27,10 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-5 text-center">
+            <div class="col-5 text-center text-danger side-text">
                 RED
             </div>
-            <div class="col-5 text-center ml-auto">
+            <div class="col-5 text-center ml-auto text-primary side-text">
                 BLUE
             </div>
         </div>
@@ -109,9 +111,11 @@
                     color_block.css('background-color', '#e53935');
 
                     break;
-                case 'Orange':
-                    color_block.css('background-color', '#FFB300');
-
+                case 'Yellow':
+                    color_block.css('background-color', '#FFC107');
+                    break;
+                case 'Green':
+                color_block.css('background-color', '#28A745');
                     break;
                 default: break;
             }
