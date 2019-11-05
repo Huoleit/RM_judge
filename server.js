@@ -154,8 +154,18 @@ const updateJudgeBoard = (side="red") => {
 
 const updateAvailTime = (socket) => {
     socket.on('reset_time',() => {
-        if('red_judge' in socket.rooms) red_data_packet.isAvailable = true;
-        else if('blue_judge' in socket.rooms) blue_status.isAvailable = true;
+        let isRed = false;
+        let isBlue = false;
+        if('red_judge' in socket.rooms) 
+        {
+            red_data_packet.isAvailable = true;
+            isRed = true;
+        }
+        else if('blue_judge' in socket.rooms) 
+        {
+            blue_status.isAvailable = true;
+            isBlue = true;
+        }
 
         let total_time = 30;
         let red_index = intervals.findIndex((o) => {
@@ -167,13 +177,13 @@ const updateAvailTime = (socket) => {
         socket.to(Object.keys(socket.rooms)[1]).emit('update_time', total_time);
         socket.emit('update_time', total_time);
 
-        if(red_index!==-1)
+        if(red_index!==-1 && isRed)
         {
             clearInterval(intervals[red_index].count_down);
             intervals.splice(red_index,1);
         }
         
-        if(blue_index!==-1)
+        if(blue_index!==-1 && isBlue)
         {
             clearInterval(intervals[blue_index].count_down);
             intervals.splice(blue_index,1);
@@ -184,6 +194,16 @@ const updateAvailTime = (socket) => {
 
             socket.to(Object.keys(socket.rooms)[1]).emit('update_time', stored.time);
             socket.emit('update_time', stored.time);
+            
+            if(isRed) 
+            {
+                io.of('/display').emit("update_energy_time", 'red', stored.time);
+                // console.log("redtime");
+            }
+            else if(isBlue) 
+            {
+                io.of('/display').emit("update_energy_time", 'blue', stored.time);
+            }
 
             console.log(Object.keys(socket.rooms)[1] + ' '+stored.time);
             if(stored.time <= 0)

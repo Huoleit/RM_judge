@@ -36,19 +36,50 @@
         </div>
         <div class="row">
             
-            <div class="col-5 text-center score_display" id="red-scoreDisplay">0</div>
+            <div class="col-5 text-center">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-1 d-flex justify-content-center ml-auto">
+                            <div style="font-size: 4em;" id="red-enery-time">0:00</div>
+                        </div>
+                        <div class="col-10">
+                            <div class="score_display" id="red-scoreDisplay">
+                                0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="col-2 text-center score_display">:</div>
-            <div class="col-5 text-center score_display" id="blue-scoreDisplay">0</div>
+            <div class="col-5 text-center" >
+                <div class="container">
+                    <div class="row">
+                        <div class="col-10">
+                            <div class="score_display" id="blue-scoreDisplay">0</div>
+                        </div>
+                        <div class="col-1 d-flex justify-content-center mr-auto">
+                            <div style="font-size: 4em;" id="blue-enery-time">0:00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="row d-flex justify-content-center">
             <div class="col-5 d-flex justify-content-center">
-                <div class="card w-50">
-                   
-                    <div class=" border border-bottom-0 border-dark rounded-top text-center card-header" id="red-colorTextDisplay">
-                        Green
+                <div class="container">
+                    <div class="row">
+                        <!-- <div class="col-2"></div> -->
+                        <div class="col-12 d-flex justify-content-center">
+                            <div class="card w-50">
+                                <div class=" border border-bottom-0 border-dark rounded-top text-center card-header" id="red-colorTextDisplay">
+                                    Green
+                                </div>
+                                <div class="card-body square bg"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body square bg"></div>
                 </div>
+                
             </div>
 
             <div class="col-1 red-statusDisplay">
@@ -69,13 +100,23 @@
             </div>
 
             <div class="col-5 d-flex justify-content-center">
-                <div class="card w-50">
-                   
-                    <div class=" border border-bottom-0 border-dark rounded-top text-center card-header" id="blue-colorTextDisplay">
-                        Green
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-center mr-auto">
+                            <div class="card w-50">
+                        
+                                <div class=" border border-bottom-0 border-dark rounded-top text-center card-header" id="blue-colorTextDisplay">
+                                    Green
+                                </div>
+                                <div class="card-body square bg"></div>
+                            </div>
+                        </div>
+                        <!-- <div class="col-2">
+
+                        </div> -->
                     </div>
-                    <div class="card-body square bg"></div>
                 </div>
+                
             </div>
 
         </div>
@@ -132,6 +173,15 @@
                 console.log(side);
                 updateOneSide(side);
             }
+        });
+        const display_avail_time = (side,time) => {
+            let seconds = time%60;
+            let minutes = (time - seconds)/60;
+            let query_string = "#"+ side + "-enery-time";
+            $(query_string).text(minutes.toString() + ":" + (seconds.toString().length===1 ? '0' : '') + seconds.toString());
+        };
+        socket.on('update_energy_time',(side,time) => {
+            display_avail_time(side,time);
         });
 
     </script>
