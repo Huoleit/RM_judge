@@ -36,20 +36,21 @@ var blue_status = {
 
 var red_data_packet = {
     name:"red",
-    color:"blue",
+    color:"Blue",
     isStable:false,
     isAvailable:false
 };
 
 var blue_data_packet = {
     name:"blue",
-    color:"blue",
+    color:"Blue",
     isStable:false,
     isAvailable:false
 };
 
 let sockets = [];
 let intervals = [];
+let receive_buffer = "";
 
 const server_red = net.createServer();
 const server_blue = net.createServer();
@@ -61,7 +62,7 @@ function server_handler(server,side = 'red')
     
         let interval = setInterval(()=>{
             socket.write(JSON.stringify(side === 'red' ? red_data_packet:blue_data_packet) + '\n');
-        }, 500);
+        }, 50);
         let soc_obj = {socket:socket, interval:interval};
     
         sockets.push(soc_obj);
@@ -69,7 +70,19 @@ function server_handler(server,side = 'red')
     
         socket.on('data', (data) => 
         {
-            console.log(data.toString());
+            receive_buffer += data;
+            if(receive_buffer.includes('\n'))
+            {
+                let array_received = receive_buffer.split('\n',2);
+                if(array_received.length > 1)
+                {
+                    if(array_received[0][0] === '{' && array_received[0][array_received[0].length - 1] === '}')
+                        console.log(array_received[0]);
+                    receive_buffer = array_received[1];
+                    receive_buffer += receive_buffer[receive_buffer.length - 1] == '}' ? '\n' : '';
+                }
+            }
+            
         });
     
         socket.on('close', function() {
@@ -83,6 +96,10 @@ function server_handler(server,side = 'red')
                 console.log(sockets.length);
             }
             console.log('CLOSED: ' + socket.remoteAddress + ' ' + socket.remotePort);
+        });
+        socket.on('error', () => {
+            console.log('error');
+            socket.destroy();
         });
     });
 
