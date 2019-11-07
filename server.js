@@ -35,18 +35,22 @@ var blue_status = {
                 primary_color:"Blue"};
 
 var red_data_packet = {
-    name:"red",
-    color:"Blue",
+    name:"r",
+    color:"r",
     isStable:false,
     isAvailable:false
 };
 
 var blue_data_packet = {
-    name:"blue",
-    color:"Blue",
+    name:"b",
+    color:"b",
     isStable:false,
     isAvailable:false
 };
+
+const serializeBool = v => v? 'T' : 'F';
+const serialize = packet => `${packet.name}${packet.color}` + 
+    `${serializeBool(packet.isStable)}${serializeBool(packet.isAvailable)}`;
 
 let sockets = [];
 let intervals = [];
@@ -61,7 +65,7 @@ function server_handler(server,side = 'red')
         console.log('CONNECTED:  ' + socket.remoteAddress + ' : ' + socket.remotePort);
     
         let interval = setInterval(()=>{
-            socket.write(JSON.stringify(side === 'red' ? red_data_packet:blue_data_packet) + '\n');
+            socket.write(serialize(side === 'red' ? red_data_packet:blue_data_packet) + '\n');
         }, 50);
         let soc_obj = {socket:socket, interval:interval};
     
@@ -245,7 +249,7 @@ redio.on("connection", (socket) => {
 
     socket.on("change_color", (color) => {
         red_status.primary_color = color;
-        red_data_packet.color = color;
+        red_data_packet.color = color[0].toLowerCase();
         updateScoreBoard();
     });
 
@@ -278,7 +282,7 @@ blueio.on("connection", (socket) => {
 
     socket.on("change_color", (color) => {
         blue_status.primary_color = color;
-        blue_data_packet.color = color;
+        blue_data_packet.color = color[0].toLowerCase();
         updateScoreBoard();
     });
     
