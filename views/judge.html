@@ -12,6 +12,9 @@
 </head>
 
 <body>
+    <style>
+    #time_display {text-align: center;}
+    </style>
     <!-- <button id="btn" onclick="test()"> Click</button> -->
     <div class="border-bottom mb-3">
         <div class="ml-5 my-3">
@@ -94,6 +97,7 @@
                     <h5>Availbale time</h5>
                 </div>
                 <div class="row d-flex justify-content-center">
+                    <button class="btn btn-info w-25" id="btn-30">30 s</button>
                     <div class="w-75 item_score_display" id="time_display">0:00</div>
                     <button class="btn btn-info w-25" id="btn-reset">Reset</button>
                 </div>
@@ -135,6 +139,7 @@
             $("#time_display").text(minutes.toString() + ":" + (seconds.toString().length===1 ? '0' : '') + seconds.toString());
         };
 
+	$("#btn-30").click(e => {socket.emit("set_time");});
         $("#btn-reset").click((e) => {
             socket.emit("reset_time");
         });
