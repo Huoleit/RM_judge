@@ -9,7 +9,7 @@ const displayio = io.of('/display');
 
 const net = require('net');
 
-var port = 3000;
+var port = 8080;
 var tcp_server_port_red = 8124;
 var tcp_server_port_blue = 8100;
 
@@ -35,18 +35,22 @@ var blue_status = {
                 primary_color:"Blue"};
 
 var red_data_packet = {
-    name:"red",
-    color:"Blue",
+    name:"r",
+    color:"r",
     isStable:false,
     isAvailable:false
 };
 
 var blue_data_packet = {
-    name:"blue",
-    color:"Blue",
+    name:"b",
+    color:"b",
     isStable:false,
     isAvailable:false
 };
+
+const serializeBool = v => v? 'T' : 'F';
+const serialize = packet => `${packet.name}${packet.color}` + 
+    `${serializeBool(packet.isAvailable)}${serializeBool(packet.isStable)}`;
 
 let sockets = [];
 let intervals = [];
@@ -55,13 +59,23 @@ let receive_buffer = "";
 const server_red = net.createServer();
 const server_blue = net.createServer();
 
+let red_freq = 0;
+let blue_freq = 0;
+
+const frequency_check = setInterval(() => {
+    console.log(`Red: ${red_freq/10}`);
+    console.log(`Blue: ${blue_freq/10}`);
+    red_freq = blue_freq = 0;
+}, 10000);
+
 function server_handler(server,side = 'red')
 {
     server.on('connection', (socket) => {
         console.log('CONNECTED:  ' + socket.remoteAddress + ' : ' + socket.remotePort);
     
         let interval = setInterval(()=>{
-            socket.write(JSON.stringify(side === 'red' ? red_data_packet:blue_data_packet) + '\n');
+            const msg = serialize(side === 'red' ? red_data_packet:blue_data_packet);
+            socket.write(msg + '\n');
         }, 50);
         let soc_obj = {socket:socket, interval:interval};
     
@@ -73,14 +87,13 @@ function server_handler(server,side = 'red')
             receive_buffer += data;
             if(receive_buffer.includes('\n'))
             {
-                let array_received = receive_buffer.split('\n',2);
-                if(array_received.length > 1)
-                {
-                    if(array_received[0][0] === '{' && array_received[0][array_received[0].length - 1] === '}')
-                        console.log(array_received[0]);
-                    receive_buffer = array_received[1];
-                    receive_buffer += receive_buffer[receive_buffer.length - 1] == '}' ? '\n' : '';
-                }
+                let array_received = receive_buffer.split('\n');
+                for (let i = 0; i < array_received.length - 1; i++)
+		    if (array_received[i][0] == 'r')
+                        red_freq++;
+                    else
+                        blue_freq++;
+                receive_buffer = array_received[array_received.length - 1];
             }
             
         });
@@ -153,16 +166,54 @@ const updateJudgeBoard = (side="red") => {
 };
 
 const updateAvailTime = (socket) => {
-    socket.on('reset_time',() => {
+    socket.on('reset_time', ()=>{
+        let isRed = false;
+        let isBlue = false;
+        if('red_judge' in socket.rooms) 
+        {
+            red_data_packet.isAvailable = false;
+            red_status.isAvailable = false;
+            isRed = true;
+        }
+        else if('blue_judge' in socket.rooms) 
+        {
+            blue_data_packet.isAvailable = false;
+            blue_status.isAvailable = false;
+            isBlue = true;
+        }
+        let total_time = 0;
+        let red_index = intervals.findIndex((o) => {
+            return 'red_judge' in o.socket.rooms;
+        });
+        let blue_index = intervals.findIndex((o) => {
+            return 'blue_judge' in o.socket.rooms;
+        });
+        socket.to(Object.keys(socket.rooms)[1]).emit('update_time', total_time);
+        socket.emit('update_time', total_time);
+        if(red_index!==-1 && isRed)
+        {
+            clearInterval(intervals[red_index].count_down);
+            intervals.splice(red_index,1);
+        }
+        
+        if(blue_index!==-1 && isBlue)
+        {
+            clearInterval(intervals[blue_index].count_down);
+            intervals.splice(blue_index,1);
+        }
+    });
+    socket.on('set_time',() => {
         let isRed = false;
         let isBlue = false;
         if('red_judge' in socket.rooms) 
         {
             red_data_packet.isAvailable = true;
+            red_status.isAvailable = true;
             isRed = true;
         }
         else if('blue_judge' in socket.rooms) 
         {
+            blue_data_packet.isAvailable = true;
             blue_status.isAvailable = true;
             isBlue = true;
         }
@@ -209,15 +260,14 @@ const updateAvailTime = (socket) => {
             if(stored.time <= 0)
             {
                 clearInterval(stored.count_down);
-                if('red_judge' in socket.rooms) red_data_packet.isAvailable = false;
-                else if('blue_judge' in socket.rooms) blue_status.isAvailable = false;
+                if('red_judge' in socket.rooms) red_status.isAvailable = red_data_packet.isAvailable = false;
+                else if('blue_judge' in socket.rooms) blue_status.isAvailable = blue_data_packet.isAvailable = false;
             }
         },1000);
         stored.count_down = count_down;
         intervals.push(stored);
     });
 };
-
 
 redio.on("connection", (socket) => {
     socket.join("red_judge");
@@ -245,7 +295,7 @@ redio.on("connection", (socket) => {
 
     socket.on("change_color", (color) => {
         red_status.primary_color = color;
-        red_data_packet.color = color;
+        red_data_packet.color = color[0].toLowerCase();
         updateScoreBoard();
     });
 
@@ -278,7 +328,7 @@ blueio.on("connection", (socket) => {
 
     socket.on("change_color", (color) => {
         blue_status.primary_color = color;
-        blue_data_packet.color = color;
+        blue_data_packet.color = color[0].toLowerCase();
         updateScoreBoard();
     });
     
